@@ -10,7 +10,7 @@ class QLearner
         @actions = actions
         @random = Random.new
         initialize_q_table
-        if File.exists?(Q_TABLE_FILE)
+        if File.exist?(Q_TABLE_FILE)
             q_table_size = grid_height * grid_width * actions.size
             resume_q_table_from_file(q_table_size)
         end

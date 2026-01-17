@@ -4,9 +4,9 @@ require_relative 'agent'
 require_relative 'game'
 require_relative 'q_learner'
 
-import java.awt.Color
-import java.awt.BasicStroke
-import javax.swing.JFrame
+java_import java.awt.Color
+java_import java.awt.BasicStroke
+java_import javax.swing.JFrame
 
 class App < JFrame
     EPISODE_MAX = 1000

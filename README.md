@@ -14,9 +14,8 @@ Simple gridworld game using Q-learning.
 
 # Tested Environments
 
-- macOS 10.13.6 (High Sierra)
-- Java 1.8.0_131
-- JRuby 9.2.0.0 (2.5.0)
+- macOS Sequoia
+- JRuby 10.0.2.0 (Ruby 3.4 compatible)
 
 # Run
 
