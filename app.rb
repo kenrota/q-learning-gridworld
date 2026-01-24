@@ -1,110 +1,103 @@
-require 'java'
+require_relative 'config'
 require_relative 'grid'
 require_relative 'agent'
 require_relative 'game'
 require_relative 'q_learner'
+require_relative 'grid_world_panel'
+require_relative 'game_controller'
+require_relative 'q_table_repository'
+require_relative 'reward_calculator'
+require_relative 'statistics_tracker'
 
-java_import java.awt.Color
-java_import java.awt.BasicStroke
 java_import javax.swing.JFrame
 
-class App < JFrame
-    EPISODE_MAX = 1000
-
-    WINDOW_POS_X  = 0
-    WINDOW_POS_Y  = 0
-    WINDOW_WIDTH  = 152
-    WINDOW_HEIGHT = 174
-    GRID_OFFSET_X = 1
-    GRID_OFFSET_Y = 23
+class App
+    WINDOW = {
+        title: 'Grid World',
+        x: 0,
+        y: 0,
+        width: 170,
+        height: 195,
+        offset_x: 10,
+        offset_y: 10
+    }.freeze
 
     def initialize
-        super
-        @grid = Grid.new
-        @agent = Agent.new(Grid::AGENT_START_POS_X, Grid::AGENT_START_POS_Y)
-        @q_learner = QLearner.new(Grid::GRID_WIDTH, Grid::GRID_HEIGHT, Agent::ACTIONS)
-        @game = Game.new(@grid, @agent, @q_learner)
-        @episodes = 0
-        initUi
+        assemble_app
     end
 
     def run
-        while(@episodes < EPISODE_MAX) do
-            inclement_episods
-            while(!@game.game_over)
-                # Tweak tick speed to check agent's movement with eyes.
-                sleep(0.5)
-                tick
-            end
-            puts "#{@episodes},#{@game.steps},#{@game.calculate_winning_percentage}"
-            @q_learner.save_q_table_to_file
-            @game.reset_game
-            repaint
+        register_shutdown_hook
+        @game_controller.run
+    end
+
+    def register_shutdown_hook
+        hook = java.lang.Thread.new { @statistics_tracker.finish }
+        java.lang.Runtime.getRuntime.addShutdownHook(hook)
+    end
+
+    private
+
+    def assemble_app
+        # Core state
+        @grid = Grid.new
+        @agent = Agent.new(
+            start_x: Config::AGENT[:start_x],
+            start_y: Config::AGENT[:start_y]
+        )
+
+        # Q-learning stack
+        @q_table_repository = QTableRepository.new
+        q_table = @q_table_repository.load_or_create(
+            grid_width: Grid::WIDTH,
+            grid_height: Grid::HEIGHT,
+            actions: Agent::ACTIONS
+        )
+        @q_learner = QLearner.new(q_table: q_table, actions: Agent::ACTIONS)
+        @reward_calculator = RewardCalculator.new
+
+        # Game + reporting
+        @game = Game.new(
+            grid: @grid,
+            agent: @agent,
+            q_learner: @q_learner,
+            reward_calculator: @reward_calculator
+        )
+        @statistics_tracker = StatisticsTracker.new
+
+        # UI
+        @panel = GridWorldPanel.new(
+            grid: @grid,
+            agent: @agent,
+            offset_x: WINDOW[:offset_x],
+            offset_y: WINDOW[:offset_y]
+        )
+        build_window(panel: @panel)
+
+        # Controller loop
+        @game_controller = GameController.new(
+            game: @game,
+            max_episodes: Config::EPISODE[:max],
+            tick_interval: Config::EPISODE[:tick_interval],
+            on_repaint: -> { @panel.repaint },
+            on_result: ->(result) { @statistics_tracker.record(result == :win) },
+            on_episode_end: ->(episode, steps) { @statistics_tracker.report_episode(episode: episode, steps: steps) },
+            on_save: -> { @q_table_repository.save(@q_learner.q_table) }
+        )
+    end
+
+    def build_window(panel:)
+        JFrame.new.tap do |w|
+            w.setTitle(WINDOW[:title])
+            w.setBounds(
+                WINDOW[:x],
+                WINDOW[:y],
+                WINDOW[:width],
+                WINDOW[:height]
+            )
+            w.setDefaultCloseOperation(JFrame::EXIT_ON_CLOSE)
+            w.add(panel)
+            w.setVisible(true)
         end
-    end
-
-    def inclement_episods
-        @episodes += 1
-    end
-
-    def tick
-        @game.step
-        repaint
-    end
-
-    def initUi
-        setTitle('Grid World')
-        setBounds(WINDOW_POS_X, WINDOW_POS_Y, WINDOW_WIDTH, WINDOW_HEIGHT)
-        setDefaultCloseOperation(JFrame::EXIT_ON_CLOSE)
-        setVisible(true)
-    end
-
-    def paint(g)
-        drawGrid(g)
-        drawAgent(g)
-    end
-
-    def drawGrid(g)
-        Grid::GRID_HEIGHT.times do |y|
-            Grid::GRID_WIDTH.times do |x|
-                color = chooseColor(@grid.grid[y][x])
-                drawBlock(g, x, y, color)
-            end
-        end
-    end
-
-    def chooseColor(block)
-        case block
-        when Grid::S then Color.new(0, 255, 0)
-        when Grid::G then Color.new(0, 0, 255)
-        when Grid::L then Color.new(210, 180, 140)
-        when Grid::H then Color.new(0, 0, 0)
-        end
-    end
-
-    def drawAgent(g)
-        drawCircle(g, @agent.x, @agent.y, Color.new(255, 0, 0))
-    end
-
-    def drawBlock(g, x, y, color)
-        g.setColor(Color::WHITE)
-        g.setStroke(BasicStroke.new(2))
-        g.drawRect(GRID_OFFSET_X + x * Grid::BLOCK_SIZE,
-                   GRID_OFFSET_Y + y * Grid::BLOCK_SIZE,
-                   Grid::BLOCK_SIZE,
-                   Grid::BLOCK_SIZE)
-        g.setColor(color)
-        g.fillRect(GRID_OFFSET_X + x * Grid::BLOCK_SIZE,
-                   GRID_OFFSET_Y + y * Grid::BLOCK_SIZE,
-                   Grid::BLOCK_SIZE,
-                   Grid::BLOCK_SIZE)
-    end
-
-    def drawCircle(g, x, y, color)
-        g.setColor(color)
-        g.fillOval(GRID_OFFSET_X + x * Grid::BLOCK_SIZE,
-                   GRID_OFFSET_Y + y * Grid::BLOCK_SIZE,
-                   Grid::BLOCK_SIZE - 1,
-                   Grid::BLOCK_SIZE - 1)
     end
 end

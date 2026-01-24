@@ -1,38 +1,36 @@
 class Grid
-  attr_reader :grid
+  WIDTH  = 10
+  HEIGHT = 10
 
-  GRID_WIDTH  = 10
-  GRID_HEIGHT = 10
-  BLOCK_SIZE  = 15
+  # Block types
+  START = :start  # Agent initial position
+  GOAL  = :goal   # Terminal state (success)
+  LAND  = :land   # Walkable ground
+  HOLE  = :hole   # Terminal state (failure)
 
-  AGENT_START_POS_X = 1
-  AGENT_START_POS_Y = 1
-
-  S = :start
-  G = :goal
-  L = :land
-  H = :hole
+  # Aliases for grid definition readability (class internal only)
+  S = START
+  G = GOAL
+  L = LAND
+  H = HOLE
+  private_constant :S, :G, :L, :H
 
   def initialize
     @grid = [
-      [H, H, H, H, H, H, H, H, H, H,],
-      [H, S, L, L, L, L, L, L, L, H,],
-      [H, L, L, L, L, L, L, L, L, H,],
-      [H, L, L, L, L, L, L, L, L, H,],
-      [H, L, L, L, L, L, H, L, L, H,],
-      [H, L, L, L, L, L, L, L, L, H,],
-      [H, H, L, L, L, L, L, L, L, H,],
-      [H, L, L, L, L, L, L, L, L, H,],
-      [H, L, L, L, L, L, L, L, G, H,],
-      [H, H, H, H, H, H, H, H, H, H,],
+      [H, H, H, H, H, H, H, H, H, H],
+      [H, S, L, L, L, L, L, L, L, H],
+      [H, L, L, L, L, L, L, L, L, H],
+      [H, L, L, L, L, L, L, L, L, H],
+      [H, L, L, L, L, L, H, L, L, H],
+      [H, L, L, L, L, L, L, L, L, H],
+      [H, H, L, L, L, L, L, L, L, H],
+      [H, L, L, L, L, L, L, L, L, H],
+      [H, L, L, L, L, L, L, L, G, H],
+      [H, H, H, H, H, H, H, H, H, H]
     ]
   end
 
-  def get_reward(next_block)
-    case next_block
-    when H then -1
-    when G then 1
-    else        0
-    end
+  def block_at(x:, y:)
+    @grid[y][x]
   end
 end

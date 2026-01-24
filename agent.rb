@@ -1,37 +1,33 @@
 class Agent
     attr_reader :x, :y
-    attr_accessor :action, :game
+    attr_accessor :action
 
-    LEFT  = 0
-    RIGHT = 1
-    UP    = 2
-    DOWN  = 3
-    ACTIONS = [LEFT, RIGHT, UP, DOWN]
+    ACTIONS = [:left, :right, :up, :down].freeze
 
-    def initialize(initial_position_x, initial_position_y)
-        @initial_position_x = initial_position_x
-        @initial_position_y = initial_position_y
+    def initialize(start_x:, start_y:)
+        @initial_position_x = start_x
+        @initial_position_y = start_y
         reset
     end
 
     def reset
         @x = @initial_position_x
         @y = @initial_position_y
-        @action = RIGHT
+        @action = :right  # Initial action toward goal direction
     end
 
-    def move(next_x, next_y)
+    def move(next_x:, next_y:)
         @x = next_x
         @y = next_y
     end
 
-    def get_next_state
+    def next_state
         case @action
-        when LEFT  then [@x - 1, @y]
-        when RIGHT then [@x + 1, @y]
-        when UP    then [@x, @y - 1]
-        when DOWN  then [@x, @y + 1]
-        else            [@x, @y]
+        when :left  then [@x - 1, @y]
+        when :right then [@x + 1, @y]
+        when :up    then [@x, @y - 1]
+        when :down  then [@x, @y + 1]
+        else             [@x, @y]
         end
     end
 end

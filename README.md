@@ -1,24 +1,24 @@
 # q-learning-gridworld
 
-Simple gridworld game using Q-learning.
+A Q-learning demonstration for pathfinding in a gridworld.
 
-# Demo
+## Demo
 
 ![Demo](demo.gif)
 
-- Red: Agent
-- Green: Start (Reward = 0)
-- Blue: Goal (Reward = 1)
-- Black: Hole (Reward = -1)
-- Beige: Land (Reward = 0)
+## Usage
 
-# Tested Environments
+```bash
+jruby main.rb
+```
+
+## Testing
+
+```bash
+jrake test
+```
+
+## Tested Environment
 
 - macOS Sequoia
 - JRuby 10.0.2.0 (Ruby 3.4 compatible)
-
-# Run
-
-```
-$ jruby main.rb
-```
